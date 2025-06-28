@@ -68,7 +68,7 @@
   </style>
 </head>
 <body>
-  <header>GoogleWhere - Guess the Populated City</header>
+  <header>GoogleWhere - Guess the Populated Place</header>
   <div id="result"></div>
   <div id="controls">
     <input type="text" id="playerName" placeholder="Your name" />
@@ -89,32 +89,33 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const cities = [
-      {name: "New York, USA", lat: 40.7128, lng: -74.0060},
-      {name: "Tokyo, Japan", lat: 35.6895, lng: 139.6917},
-      {name: "Paris, France", lat: 48.8566, lng: 2.3522},
-      {name: "Cairo, Egypt", lat: 30.0444, lng: 31.2357},
-      {name: "São Paulo, Brazil", lat: -23.5505, lng: -46.6333},
-      {name: "Lagos, Nigeria", lat: 6.5244, lng: 3.3792},
-      {name: "Mumbai, India", lat: 19.0760, lng: 72.8777},
-      {name: "Istanbul, Turkey", lat: 41.0082, lng: 28.9784},
-      {name: "Bangkok, Thailand", lat: 13.7563, lng: 100.5018},
-      {name: "Mexico City, Mexico", lat: 19.4326, lng: -99.1332}
+    // Replace this with the full 5000 locations array
+    const locations = [
+      {"lat":40.7,"lng":-73.9}, {"lat":34.1,"lng":-118.2}, {"lat":48.8,"lng":2.3},
+      {"lat":35.6,"lng":139.7}, {"lat":51.5,"lng":-0.1}, {"lat":19.4,"lng":-99.1},
+      // ... (add all 5000 here)
     ];
 
-    let cityQueue = [];
-
-    function getNextCity() {
-      if (cityQueue.length === 0) {
-        cityQueue = [...cities].sort(() => Math.random() - 0.5);
-      }
-      return cityQueue.pop();
-    }
-
+    let locationQueue = [];
     let selected = null;
     let guessLocation = null;
     let photoMap, mainMap, photoMarker, markerLayer;
     let leaderboard = [];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function getNextLocation() {
+      if (locationQueue.length === 0) {
+        locationQueue = [...locations];
+        shuffle(locationQueue);
+      }
+      return locationQueue.pop();
+    }
 
     function toRad(d) { return d * Math.PI / 180; }
 
@@ -140,17 +141,14 @@
       list.innerHTML = "";
       leaderboard.slice(0, 10).forEach(({name, dist}, idx) => {
         const li = document.createElement("li");
-        let badge = "";
-        if (idx === 0) badge = " 🏆";
-        else if (idx === 1) badge = " 🥈";
-        else if (idx === 2) badge = " 🥉";
+        let badge = idx === 0 ? " 🏆" : idx === 1 ? " 🥈" : idx === 2 ? " 🥉" : "";
         li.textContent = `${idx + 1}. ${name} - ${dist.toFixed(1)} km${badge}`;
         list.appendChild(li);
       });
     }
 
     function startGame() {
-      selected = getNextCity();
+      selected = getNextLocation();
       guessLocation = null;
       document.getElementById("result").innerText = "";
       document.getElementById("guess-info").innerText = "Tap the map to guess!";
@@ -178,7 +176,7 @@
     function submitGuess() {
       const name = document.getElementById("playerName").value.trim();
       const dist = getDistance(guessLocation, selected);
-      document.getElementById("result").innerHTML = `You were ${dist.toFixed(1)} km from ${selected.name}`;
+      document.getElementById("result").innerHTML = `You were ${dist.toFixed(1)} km from the hidden location`;
       L.marker([selected.lat, selected.lng]).addTo(markerLayer);
 
       leaderboard.push({name, dist});
@@ -207,7 +205,7 @@
       document.getElementById("next-btn").onclick = startGame;
 
       startGame();
-    }
+    };
   </script>
 </body>
 </html>
