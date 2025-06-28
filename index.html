@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GoogleWhere - Populated City Edition</title>
+  <title>GoogleWhere - Populated City Edition (Satellite View)</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
@@ -20,7 +20,7 @@
   </style>
 </head>
 <body>
-  <header>GoogleWhere - Guess the Populated City</header>
+  <header>GoogleWhere - Guess the Populated City (Satellite View)</header>
   <div id="result"></div>
 
   <div id="controls">
@@ -110,7 +110,7 @@
       mainMap = L.map("map");
       markerLayer = L.layerGroup().addTo(mainMap);
 
-      const tiles = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      const tiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
       L.tileLayer(tiles, { maxZoom: 18 }).addTo(photoMap);
       L.tileLayer(tiles, { maxZoom: 18 }).addTo(mainMap);
 
