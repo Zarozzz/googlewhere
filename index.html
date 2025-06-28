@@ -2,277 +2,221 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GoogleWhere - Guess the Random Populated Place</title>
-  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GoogleWhere - Guess the Location</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
+      font-family: Arial, sans-serif;
       display: flex;
+      flex-direction: column;
       height: 100vh;
-      background: #f0f0f0;
     }
     header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
       background: #2a7ae2;
       color: white;
       padding: 1rem;
       text-align: center;
       font-size: 1.5rem;
-      z-index: 10;
+      flex-shrink: 0;
     }
-    #leaderboard {
-      width: 250px;
-      background: white;
-      padding: 1rem;
-      overflow-y: auto;
-      border-right: 1px solid #ddd;
-      margin-top: 72px;
-    }
-    #leaderboard h3 {
-      margin-top: 0;
-      text-align: center;
-    }
-    #main {
-      flex: 1;
+    #controls {
+      padding: 0.5rem 1rem;
+      background: #fff;
       display: flex;
-      flex-direction: column;
+      flex-wrap: wrap;
+      justify-content: space-between;
       align-items: center;
-      padding: 1rem;
-      margin-top: 72px;
-      overflow-y: auto;
     }
-    #play-area {
-      display: flex;
-      width: 100%;
-      max-width: 1400px;
-      gap: 1rem;
+    #playerName {
       flex-grow: 1;
-    }
-    #photo-container {
-      flex: 1;
-      min-width: 300px;
-      max-width: 500px;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
-      height: 500px;
-    }
-    #photo-map {
-      height: 100%;
-      width: 100%;
-    }
-    #map {
-      flex: 2;
-      min-height: 500px;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
-    }
-    #guess-info, #result {
-      margin-top: 1rem;
-      font-size: 1rem;
-      max-width: 1400px;
-    }
-    button, input[type="text"] {
-      margin-top: 1rem;
+      min-width: 120px;
       padding: 0.5rem;
       font-size: 1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
+      margin-right: 0.5rem;
     }
-    ul#scoreList {
-      padding-left: 1rem;
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin: 0.5rem 0.25rem;
     }
-    @media (max-width: 900px) {
+    #play-area {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      box-sizing: border-box;
+    }
+    #photo-map, #map {
+      flex: 1 1 100%;
+      height: 40vh;
+      min-height: 250px;
+      border-radius: 8px;
+      box-shadow: 0 0 4px rgba(0,0,0,0.2);
+    }
+    @media (min-width: 768px) {
+      #photo-map, #map {
+        flex: 1 1 48%;
+        height: 100%;
+      }
       #play-area {
-        flex-direction: column;
+        height: 60vh;
+        flex-wrap: nowrap;
       }
-      #photo-container, #map {
-        height: 300px;
-        max-width: 100%;
-      }
+    }
+    #result, #guess-info {
+      text-align: center;
+      padding: 0.5rem;
+    }
+    #leaderboard-toggle {
+      display: inline-block;
+      background: #eee;
+      padding: 0.25rem 0.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+    #leaderboard {
+      background: white;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 1rem;
+      display: none;
+      font-size: 0.9rem;
+    }
+    #leaderboard ul {
+      list-style: none;
+      padding-left: 0;
     }
   </style>
 </head>
 <body>
-  <header>GoogleWhere - Guess the Random Populated Place</header>
-
+  <header>GoogleWhere - Guess the Location</header>
+  <div id="controls">
+    <input type="text" id="playerName" placeholder="Enter your name" />
+    <button id="submit-btn" disabled>Submit</button>
+    <button id="next-btn" style="display:none;">Next</button>
+    <span id="leaderboard-toggle">Leaderboard ▼</span>
+  </div>
   <div id="leaderboard">
-    <h3>Leaderboard</h3>
     <ul id="scoreList"></ul>
   </div>
-
-  <div id="main">
-    <input type="text" id="playerName" placeholder="Enter your name" />
-    <div id="play-area">
-      <div id="photo-container">
-        <div id="photo-map"></div>
-      </div>
-      <div id="map"></div>
-    </div>
-    <div id="guess-info">Click on the map to make your guess.</div>
-    <button id="submit-btn" disabled>Submit Guess</button>
-    <button id="next-btn" style="display:none;">Next Round</button>
-    <div id="result"></div>
+  <div id="play-area">
+    <div id="photo-map"></div>
+    <div id="map"></div>
   </div>
-
+  <div id="guess-info">Click the map to guess the location.</div>
+  <div id="result"></div>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const landRegions = [
-      {name: "North America", bounds: [[24.396308,-125.0],[49.384358,-66.93457]]},
-      {name: "Europe", bounds: [[36.0,-10.0],[60.0,30.0]]},
-      {name: "South America", bounds: [[-55.0,-75.0],[-8.0,-34.0]]},
-      {name: "Asia", bounds: [[5.0,60.0],[55.0,150.0]]},
-      {name: "Africa", bounds: [[-35.0,-18.0],[37.0,51.0]]}
+      { bounds: [[24.396308,-125.0],[49.384358,-66.93457]] },
+      { bounds: [[36.0,-10.0],[60.0,30.0]] },
+      { bounds: [[-55.0,-75.0],[-8.0,-34.0]] },
+      { bounds: [[5.0,60.0],[55.0,150.0]] },
+      { bounds: [[-35.0,-18.0],[37.0,51.0]] }
     ];
 
-    function randomLatLngInBounds(bounds) {
-      const southWest = bounds[0];
-      const northEast = bounds[1];
-      const lat = southWest[0] + Math.random() * (northEast[0] - southWest[0]);
-      const lng = southWest[1] + Math.random() * (northEast[1] - southWest[1]);
-      return { lat, lng };
+    function randomLatLng(bounds) {
+      const sw = bounds[0], ne = bounds[1];
+      return {
+        lat: sw[0] + Math.random() * (ne[0] - sw[0]),
+        lng: sw[1] + Math.random() * (ne[1] - sw[1])
+      };
     }
 
-    function chooseRandomRegion() {
-      return landRegions[Math.floor(Math.random() * landRegions.length)];
-    }
+    let selected = null, guessLocation = null;
+    let photoMap, map, markerLayer, photoMarker;
+    const submitBtn = document.getElementById("submit-btn");
+    const nextBtn = document.getElementById("next-btn");
+    const leaderboardEl = document.getElementById("leaderboard");
+    const leaderboardToggle = document.getElementById("leaderboard-toggle");
 
-    let selected = null;
-    let guessLocation = null;
-    let map = null;
-    let photoMap = null;
-    let markerLayer = null;
-    let photoMarker = null;
-    let submitBtn, nextBtn;
-
-    function toRadians(deg) {
-      return deg * Math.PI / 180;
-    }
-
-    function getDistance(lat1, lng1, lat2, lng2) {
+    function toRad(d) { return d * Math.PI / 180; }
+    function getDistance(a, b) {
       const R = 6371;
-      const dLat = toRadians(lat2 - lat1);
-      const dLng = toRadians(lng2 - lng1);
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
+      const dLat = toRad(b.lat - a.lat);
+      const dLng = toRad(b.lng - a.lng);
+      const sa = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng/2)**2;
+      return R * 2 * Math.atan2(Math.sqrt(sa), Math.sqrt(1-sa));
     }
 
-    function updateLeaderboard(name, score) {
-      let scores = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-      scores.push({ name, score });
+    function updateLeaderboard(name, dist) {
+      const scores = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+      scores.push({ name, score: dist });
       scores.sort((a, b) => a.score - b.score);
-      localStorage.setItem('leaderboard', JSON.stringify(scores));
-      renderLeaderboard(scores);
-    }
-
-    function renderLeaderboard(scores) {
-      const list = document.getElementById('scoreList');
-      list.innerHTML = '';
-      scores.slice(0, 10).forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `${entry.name} – ${entry.score.toFixed(1)} km`;
-        list.appendChild(li);
-      });
+      localStorage.setItem('leaderboard', JSON.stringify(scores.slice(0, 10)));
+      const ul = document.getElementById("scoreList");
+      ul.innerHTML = scores.slice(0,10).map(s => `<li>${s.name}: ${s.score.toFixed(1)} km</li>`).join("");
     }
 
     function startGame() {
-      const region = chooseRandomRegion();
-      selected = randomLatLngInBounds(region.bounds);
+      const region = landRegions[Math.floor(Math.random() * landRegions.length)];
+      selected = randomLatLng(region.bounds);
       guessLocation = null;
-      document.getElementById('result').innerHTML = '';
-      document.getElementById('guess-info').textContent = 'Click on the map to make your guess.';
+      document.getElementById("result").innerText = "";
+      document.getElementById("guess-info").innerText = "Click the map to guess the location.";
       submitBtn.disabled = true;
-      nextBtn.style.display = 'none';
+      nextBtn.style.display = "none";
 
-      // Set photoMap to selected location zoom 15 (close up)
       photoMap.setView([selected.lat, selected.lng], 15);
-      if (photoMarker) {
-        photoMap.removeLayer(photoMarker);
-      }
+      if (photoMarker) photoMap.removeLayer(photoMarker);
       photoMarker = L.marker([selected.lat, selected.lng]).addTo(photoMap);
 
-      // Reset guess map
       map.setView([20, 0], 2);
       markerLayer.clearLayers();
-      map.on('click', handleMapClick);
+      map.on("click", onMapClick);
     }
 
-    function handleMapClick(e) {
-      const name = document.getElementById('playerName').value.trim();
-      if (!name) {
-        alert("Please enter your name before guessing.");
-        return;
-      }
+    function onMapClick(e) {
+      const name = document.getElementById("playerName").value.trim();
+      if (!name) return alert("Enter your name first");
       guessLocation = e.latlng;
       markerLayer.clearLayers();
       L.marker(guessLocation).addTo(markerLayer);
-      document.getElementById('guess-info').textContent =
-        `Your guess: Lat ${guessLocation.lat.toFixed(4)}, Lng ${guessLocation.lng.toFixed(4)}`;
+      document.getElementById("guess-info").innerText =
+        `Your guess: ${guessLocation.lat.toFixed(2)}, ${guessLocation.lng.toFixed(2)}`;
       submitBtn.disabled = false;
     }
 
     window.onload = () => {
-      submitBtn = document.getElementById('submit-btn');
-      nextBtn = document.getElementById('next-btn');
-      const scores = JSON.parse(localStorage.getItem('leaderboard') || '[]');
-      renderLeaderboard(scores);
-
-      // Initialize photo map (small close-up) with satellite + roads overlay
-      photoMap = L.map('photo-map', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false });
-      // Satellite base
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles © Esri',
-        maxZoom: 18
-      }).addTo(photoMap);
-      // Roads overlay (transparent)
+      photoMap = L.map("photo-map", {
+        zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false, tap: false
+      });
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(photoMap);
       L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Roads © Esri',
-        maxZoom: 18,
-        opacity: 0.6,
-        pane: 'overlayPane'
+        opacity: 0.5
       }).addTo(photoMap);
 
-      // Initialize guess map (big, interactive) - satellite only
-      map = L.map('map');
+      map = L.map("map", { tap: false });
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
       markerLayer = L.layerGroup().addTo(map);
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles © Esri',
-        maxZoom: 18
-      }).addTo(map);
 
-      startGame();
+      leaderboardToggle.onclick = () => {
+        leaderboardEl.style.display = leaderboardEl.style.display === "block" ? "none" : "block";
+      };
 
-      submitBtn.addEventListener('click', () => {
-        const name = document.getElementById('playerName').value.trim();
-        if (!name || !guessLocation) return;
-        const dist = getDistance(guessLocation.lat, guessLocation.lng, selected.lat, selected.lng);
-        document.getElementById('result').innerHTML =
-          `<p>You were <strong>${dist.toFixed(2)} km</strong> away!</p>`;
-        L.marker([selected.lat, selected.lng], {
-          icon: L.icon({
-            iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/RedDot.svg/120px-RedDot.svg.png',
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-          })
-        }).addTo(markerLayer);
+      const scores = JSON.parse(localStorage.getItem("leaderboard") || "[]");
+      document.getElementById("scoreList").innerHTML = scores.map(s => `<li>${s.name}: ${s.score.toFixed(1)} km</li>`).join("");
+
+      submitBtn.onclick = () => {
+        const name = document.getElementById("playerName").value.trim();
+        if (!guessLocation || !name) return;
+        const dist = getDistance(guessLocation, selected);
+        document.getElementById("result").innerHTML = `<strong>You were ${dist.toFixed(1)} km away!</strong>`;
+        L.marker([selected.lat, selected.lng]).addTo(markerLayer);
         updateLeaderboard(name, dist);
         submitBtn.disabled = true;
-        map.off('click');
-        document.getElementById('guess-info').textContent = 'Game over! Click "Next Round" to play again.';
-        nextBtn.style.display = 'inline-block';
-      });
+        nextBtn.style.display = "inline-block";
+        map.off("click");
+      };
 
-      nextBtn.addEventListener('click', () => {
-        startGame();
-      });
+      nextBtn.onclick = startGame;
+
+      startGame();
     };
   </script>
 </body>
