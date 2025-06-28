@@ -8,29 +8,34 @@
   <style>
     body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
     header { background: #0066cc; color: white; padding: 1rem; text-align: center; }
-    #controls { padding: 1rem; background: #f4f4f4; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+    #result { text-align: center; background: #fff4cc; padding: 0.75rem; font-weight: bold; }
+    #controls { padding: 1rem; background: #f4f4f4; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: center; }
     #play-area { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; }
     #photo-map, #map { flex: 1; height: 45vh; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
     @media (min-width: 768px) {
       #play-area { flex-direction: row; }
       #photo-map, #map { height: 100%; flex: 1; }
     }
-    #result, #guess-info { text-align: center; padding: 0.5rem; }
+    #guess-info { text-align: center; padding: 0.5rem; }
   </style>
 </head>
 <body>
   <header>GoogleWhere - Guess the Populated City</header>
+  <div id="result"></div>
+
   <div id="controls">
     <input type="text" id="playerName" placeholder="Your name" />
     <button id="submit-btn" disabled>Submit</button>
     <button id="next-btn" style="display:none;">Next</button>
   </div>
+
   <div id="play-area">
     <div id="photo-map"></div>
     <div id="map"></div>
   </div>
+
   <div id="guess-info">Tap the map to guess the location!</div>
-  <div id="result"></div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const cities = [
@@ -93,7 +98,7 @@
     function submitGuess() {
       const name = document.getElementById("playerName").value.trim();
       const dist = getDistance(guessLocation, selected);
-      document.getElementById("result").innerHTML = `<b>You were ${dist.toFixed(1)} km from ${selected.name}</b>`;
+      document.getElementById("result").innerHTML = `You were ${dist.toFixed(1)} km from ${selected.name}`;
       L.marker([selected.lat, selected.lng]).addTo(markerLayer);
       document.getElementById("submit-btn").disabled = true;
       document.getElementById("next-btn").style.display = "inline-block";
