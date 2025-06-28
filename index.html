@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GoogleWhere - Guess the Random Location</title>
+  <title>GoogleWhere - Guess the Random Populated Place</title>
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
   <style>
     body {
@@ -122,6 +122,26 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    const landRegions = [
+      {name: "North America", bounds: [[24.396308,-125.0],[49.384358,-66.93457]]},
+      {name: "Europe", bounds: [[36.0,-10.0],[60.0,30.0]]},
+      {name: "South America", bounds: [[-55.0,-75.0],[-8.0,-34.0]]},
+      {name: "Asia", bounds: [[5.0,60.0],[55.0,150.0]]},
+      {name: "Africa", bounds: [[-35.0,-18.0],[37.0,51.0]]}
+    ];
+
+    function randomLatLngInBounds(bounds) {
+      const southWest = bounds[0];
+      const northEast = bounds[1];
+      const lat = southWest[0] + Math.random() * (northEast[0] - southWest[0]);
+      const lng = southWest[1] + Math.random() * (northEast[1] - southWest[1]);
+      return { lat, lng };
+    }
+
+    function chooseRandomRegion() {
+      return landRegions[Math.floor(Math.random() * landRegions.length)];
+    }
+
     let selected = null;
     let guessLocation = null;
     let map = null;
@@ -129,15 +149,6 @@
     let markerLayer = null;
     let photoMarker = null;
     let submitBtn, nextBtn;
-
-    function getRandomLatLng() {
-      let lat, lng;
-      do {
-        lat = (Math.random() * 140) - 70; // Between -70 and +70 to avoid poles
-        lng = (Math.random() * 360) - 180;
-      } while (lat < -60 || lat > 70); // Avoid ice caps and poles
-      return { lat, lng };
-    }
 
     function toRadians(deg) {
       return deg * Math.PI / 180;
@@ -173,7 +184,8 @@
     }
 
     function startGame() {
-      selected = getRandomLatLng();
+      const region = chooseRandomRegion();
+      selected = randomLatLngInBounds(region.bounds);
       guessLocation = null;
       document.getElementById('result').innerHTML = '';
       document.getElementById('guess-info').textContent = 'Click on the map to make your guess.';
@@ -213,14 +225,22 @@
       const scores = JSON.parse(localStorage.getItem('leaderboard') || '[]');
       renderLeaderboard(scores);
 
-      // Initialize photo map (small close-up)
+      // Initialize photo map (small close-up) with satellite + roads overlay
       photoMap = L.map('photo-map', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false });
+      // Satellite base
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles © Esri',
         maxZoom: 18
       }).addTo(photoMap);
+      // Roads overlay (transparent)
+      L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Roads © Esri',
+        maxZoom: 18,
+        opacity: 0.6,
+        pane: 'overlayPane'
+      }).addTo(photoMap);
 
-      // Initialize guess map (big, interactive)
+      // Initialize guess map (big, interactive) - satellite only
       map = L.map('map');
       markerLayer = L.layerGroup().addTo(map);
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
