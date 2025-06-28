@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,6 +122,7 @@
 
     <div id="guess-info">Click on the map to make your guess.</div>
     <button id="submit-btn" disabled>Submit Guess</button>
+    <button id="next-btn" style="display:none;">Next Round</button>
     <div id="result"></div>
   </div>
 
@@ -159,40 +161,19 @@
       }
     ];
 
-    // Pick a random one
-    const selected = locations[Math.floor(Math.random() * locations.length)];
+    let currentIndex = -1;
+    let selected = null;
     let guessLocation = null;
+    let map = null;
+    let markerLayer = null;
+    let submitBtn, nextBtn;
 
-    // Load image
-    document.getElementById('photo').src = selected.image;
-
-    // Initialize map
-    const map = L.map('map').setView([20, 0], 2);
-    const markerLayer = L.layerGroup().addTo(map);
-    const submitBtn = document.getElementById('submit-btn');
-
-    // Satellite tiles
-    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHR4cG1mY2gifQ._zY4bDZoYlM5Hb3AB3CCwQ', {
-      maxZoom: 18,
-      tileSize: 512,
-      zoomOffset: -1,
-      attribution: '© Mapbox © OpenStreetMap',
-    }).addTo(map);
-
-    map.on('click', function (e) {
-      const name = document.getElementById('playerName').value.trim();
-      if (!name) {
-        alert("Please enter your name before guessing.");
-        return;
-      }
-
-      guessLocation = e.latlng;
-      markerLayer.clearLayers();
-      L.marker(guessLocation).addTo(markerLayer);
-      document.getElementById('guess-info').textContent =
-        `Your guess: Lat ${guessLocation.lat.toFixed(4)}, Lng ${guessLocation.lng.toFixed(4)}`;
-      submitBtn.disabled = false;
-    });
+    function pickRandomLocation() {
+      currentIndex = Math.floor(Math.random() * locations.length);
+      selected = locations[currentIndex];
+      document.getElementById('photo').src = selected.image;
+      document.getElementById('photo').alt = "Guess the location: " + selected.name;
+    }
 
     function toRadians(deg) {
       return deg * Math.PI / 180;
@@ -216,32 +197,83 @@
       list.appendChild(li);
     }
 
-    submitBtn.addEventListener('click', () => {
-      const name = document.getElementById('playerName').value.trim();
-      if (!name || !guessLocation) return;
-
-      const dist = getDistance(
-        guessLocation.lat, guessLocation.lng,
-        selected.lat, selected.lng
-      );
-
-      document.getElementById('result').innerHTML =
-        `<p>You were <strong>${dist.toFixed(2)} km</strong> away!</p>`;
-
-      L.marker([selected.lat, selected.lng], {
-        icon: L.icon({
-          iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/RedDot.svg/120px-RedDot.svg.png',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        })
-      }).addTo(markerLayer);
-
-      updateLeaderboard(name, dist);
-
+    function startGame() {
+      pickRandomLocation();
+      guessLocation = null;
+      document.getElementById('result').innerHTML = '';
+      document.getElementById('guess-info').textContent = 'Click on the map to make your guess.';
       submitBtn.disabled = true;
-      map.off('click');
-      document.getElementById('guess-info').textContent = 'Game over! Refresh to play again.';
-    });
+      nextBtn.style.display = 'none';
+
+      if (markerLayer) markerLayer.clearLayers();
+      if (!map) {
+        map = L.map('map').setView([20, 0], 2);
+        markerLayer = L.layerGroup().addTo(map);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+          attribution: 'Tiles © Esri',
+          maxZoom: 18
+        }).addTo(map);
+      } else {
+        map.setView([20, 0], 2);
+        map.eachLayer(layer => {
+          if (layer instanceof L.Marker) map.removeLayer(layer);
+        });
+        markerLayer.clearLayers();
+        map.on('click', handleMapClick);
+      }
+    }
+
+    function handleMapClick(e) {
+      const name = document.getElementById('playerName').value.trim();
+      if (!name) {
+        alert("Please enter your name before guessing.");
+        return;
+      }
+      guessLocation = e.latlng;
+      markerLayer.clearLayers();
+      L.marker(guessLocation).addTo(markerLayer);
+      document.getElementById('guess-info').textContent =
+        `Your guess: Lat ${guessLocation.lat.toFixed(4)}, Lng ${guessLocation.lng.toFixed(4)}`;
+      submitBtn.disabled = false;
+    }
+
+    window.onload = () => {
+      submitBtn = document.getElementById('submit-btn');
+      nextBtn = document.getElementById('next-btn');
+      startGame();
+      map.on('click', handleMapClick);
+
+      submitBtn.addEventListener('click', () => {
+        const name = document.getElementById('playerName').value.trim();
+        if (!name || !guessLocation) return;
+
+        const dist = getDistance(
+          guessLocation.lat, guessLocation.lng,
+          selected.lat, selected.lng
+        );
+
+        document.getElementById('result').innerHTML =
+          `<p>You were <strong>${dist.toFixed(2)} km</strong> away!</p>`;
+
+        L.marker([selected.lat, selected.lng], {
+          icon: L.icon({
+            iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/RedDot.svg/120px-RedDot.svg.png',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          })
+        }).addTo(markerLayer);
+
+        updateLeaderboard(name, dist);
+        submitBtn.disabled = true;
+        map.off('click');
+        document.getElementById('guess-info').textContent = 'Game over! Click "Next Round" to play again.';
+        nextBtn.style.display = 'inline-block';
+      });
+
+      nextBtn.addEventListener('click', () => {
+        startGame();
+      });
+    };
   </script>
 </body>
 </html>
