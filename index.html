@@ -1,127 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>GoogleWhere - Guess the Populated City (Satellite View + Leaderboard)</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-  body {
-    margin: 0;
-    font-family: sans-serif;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
-  header {
-    background: #0066cc;
-    color: white;
-    padding: 1rem;
-    text-align: center;
-  }
-  #result {
-    text-align: center;
-    background: #fff4cc;
-    padding: 0.75rem;
-    font-weight: bold;
-  }
-  #controls {
-    padding: 1rem;
-    background: #f4f4f4;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: center;
-  }
-  #main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 0.5rem;
-    gap: 0.5rem;
-    height: 100%;
-  }
-  #maps {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  #photo-map {
-    flex: 1;
-    height: 40vh;
-    border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-  }
-  #map {
-    flex: 2;
-    height: 55vh;
-    border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-  }
-  #leaderboard {
-    background: #ffffff; /* bright white */
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    padding: 1rem;
-    width: 280px;
-    overflow-y: auto;
-    color: #222; /* dark text */
-  }
-  #leaderboard h3 {
-    margin-top: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #004a99;
-    text-align: center;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
-  }
-  #leaderboard-list {
-    list-style: none;
-    padding-left: 0;
-    margin: 0;
-  }
-  #leaderboard-list li {
-    padding: 0.3rem 0.5rem;
-    border-bottom: 1px solid #ddd;
-    transition: background-color 0.3s ease;
-    cursor: default;
-  }
-  #leaderboard-list li:hover {
-    background-color: #d0e7ff;
-    color: #003366;
-    font-weight: bold;
-  }
-  #guess-info {
-    text-align: center;
-    padding: 0.5rem;
-  }
-
-  @media (min-width: 768px) {
-    #main-content {
-      flex-direction: row;
-      gap: 1rem;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GoogleWhere - Guess the Populated City</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin: 0; font-family: sans-serif; display: flex; flex-direction: column; height: 100vh; }
+    header { background: #0066cc; color: white; padding: 1rem; text-align: center; }
+    #result { text-align: center; background: #fff4cc; padding: 0.75rem; font-weight: bold; }
+    #controls {
+      padding: 1rem;
+      background: #f4f4f4;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
     }
-    #maps {
-      flex: 1;
-      flex-direction: column;
-      height: 100%;
-    }
-  }
-  @media (max-width: 767px) {
+    #main-content { flex: 1; display: flex; flex-direction: column; padding: 0.5rem; gap: 0.5rem; height: 100%; }
+    #maps { flex: 1; display: flex; flex-direction: column; gap: 0.5rem; }
+    #photo-map { flex: 1; height: 40vh; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
+    #map { flex: 2; height: 55vh; border-radius: 8px; box-shadow: 0 0 5px rgba(0,0,0,0.2); }
     #leaderboard {
-      width: 100%;
-      height: 150px;
-      order: 2;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 1rem;
+      width: 280px;
+      overflow-y: auto;
+      color: #222;
     }
-    #maps {
-      order: 1;
+    #leaderboard h3 {
+      margin-top: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #004a99;
+      text-align: center;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.1);
     }
-  }
-</style>
+    #leaderboard-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    #leaderboard-list li {
+      padding: 0.3rem 0.5rem;
+      border-bottom: 1px solid #ddd;
+      transition: background-color 0.3s ease;
+      cursor: default;
+    }
+    #leaderboard-list li:hover {
+      background-color: #d0e7ff;
+      color: #003366;
+      font-weight: bold;
+    }
+    #guess-info { text-align: center; padding: 0.5rem; }
+
+    @media (min-width: 768px) {
+      #main-content { flex-direction: row; gap: 1rem; }
+      #maps { flex: 1; flex-direction: column; height: 100%; }
+    }
+
+    @media (max-width: 767px) {
+      #leaderboard { width: 100%; height: 150px; order: 2; }
+      #maps { order: 1; }
+    }
+  </style>
 </head>
 <body>
-  <header>GoogleWhere - Guess the Populated City (Satellite View + Leaderboard)</header>
+  <header>GoogleWhere - Guess the Populated City</header>
   <div id="result"></div>
   <div id="controls">
     <input type="text" id="playerName" placeholder="Your name" />
@@ -155,14 +102,19 @@
       {name: "Mexico City, Mexico", lat: 19.4326, lng: -99.1332}
     ];
 
+    let cityQueue = [];
+
+    function getNextCity() {
+      if (cityQueue.length === 0) {
+        cityQueue = [...cities].sort(() => Math.random() - 0.5);
+      }
+      return cityQueue.pop();
+    }
+
     let selected = null;
     let guessLocation = null;
     let photoMap, mainMap, photoMarker, markerLayer;
     let leaderboard = [];
-
-    function randomCity() {
-      return cities[Math.floor(Math.random() * cities.length)];
-    }
 
     function toRad(d) { return d * Math.PI / 180; }
 
@@ -172,6 +124,15 @@
       const dLng = toRad(b.lng - a.lng);
       const aComp = Math.sin(dLat/2)**2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng/2)**2;
       return R * 2 * Math.atan2(Math.sqrt(aComp), Math.sqrt(1 - aComp));
+    }
+
+    function loadLeaderboard() {
+      const saved = localStorage.getItem("googlewhere-leaderboard");
+      leaderboard = saved ? JSON.parse(saved) : [];
+    }
+
+    function saveLeaderboard() {
+      localStorage.setItem("googlewhere-leaderboard", JSON.stringify(leaderboard));
     }
 
     function updateLeaderboard() {
@@ -189,7 +150,7 @@
     }
 
     function startGame() {
-      selected = randomCity();
+      selected = getNextCity();
       guessLocation = null;
       document.getElementById("result").innerText = "";
       document.getElementById("guess-info").innerText = "Tap the map to guess!";
@@ -222,6 +183,7 @@
 
       leaderboard.push({name, dist});
       leaderboard.sort((a,b) => a.dist - b.dist);
+      saveLeaderboard();
       updateLeaderboard();
 
       document.getElementById("submit-btn").disabled = true;
@@ -237,6 +199,9 @@
       const tiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
       L.tileLayer(tiles, { maxZoom: 18 }).addTo(photoMap);
       L.tileLayer(tiles, { maxZoom: 18 }).addTo(mainMap);
+
+      loadLeaderboard();
+      updateLeaderboard();
 
       document.getElementById("submit-btn").onclick = submitGuess;
       document.getElementById("next-btn").onclick = startGame;
