@@ -9,10 +9,9 @@
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      background: #f0f0f0;
       display: flex;
-      flex-direction: row;
       height: 100vh;
+      background: #f0f0f0;
     }
 
     header {
@@ -54,16 +53,16 @@
 
     #play-area {
       display: flex;
-      justify-content: center;
-      gap: 1rem;
       width: 100%;
-      max-width: 1000px;
-      flex-wrap: wrap;
+      max-width: 1400px;
+      gap: 1rem;
+      flex-grow: 1;
     }
 
-    #photo-container, #map {
+    #photo-container {
       flex: 1;
       min-width: 300px;
+      max-width: 500px;
     }
 
     #photo {
@@ -73,7 +72,8 @@
     }
 
     #map {
-      height: 400px;
+      flex: 2;
+      min-height: 500px;
       border-radius: 8px;
     }
 
@@ -86,120 +86,3 @@
       margin-top: 1rem;
       padding: 0.5rem;
       font-size: 1rem;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-
-    ul#scoreList {
-      padding-left: 1rem;
-    }
-
-    @media (max-width: 800px) {
-      #play-area {
-        flex-direction: column;
-      }
-    }
-  </style>
-</head>
-<body>
-  <header>GoogleWhere - Guess the Location</header>
-
-  <div id="leaderboard">
-    <h3>Leaderboard</h3>
-    <ul id="scoreList"></ul>
-  </div>
-
-  <div id="main">
-    <input type="text" id="playerName" placeholder="Enter your name" />
-    
-    <div id="play-area">
-      <div id="photo-container">
-        <img id="photo" src="https://upload.wikimedia.org/wikipedia/commons/e/e6/Eiffel_Tower_from_the_trocadero%2C_Paris_5_March_2013.jpg" alt="Guess the location" />
-      </div>
-      <div id="map"></div>
-    </div>
-
-    <div id="guess-info">Click on the map to make your guess.</div>
-    <button id="submit-btn" disabled>Submit Guess</button>
-    <div id="result"></div>
-  </div>
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const realLocation = { lat: 48.8584, lng: 2.2945 }; // Eiffel Tower
-    let guessLocation = null;
-    const map = L.map('map').setView([20, 0], 2);
-    const markerLayer = L.layerGroup().addTo(map);
-    const submitBtn = document.getElementById('submit-btn');
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-    }).addTo(map);
-
-    map.on('click', function(e) {
-      const name = document.getElementById('playerName').value.trim();
-      if (!name) {
-        alert("Please enter your name before guessing.");
-        return;
-      }
-
-      guessLocation = e.latlng;
-      markerLayer.clearLayers();
-      L.marker(guessLocation).addTo(markerLayer);
-      document.getElementById('guess-info').textContent =
-        `Your guess: Lat ${guessLocation.lat.toFixed(4)}, Lng ${guessLocation.lng.toFixed(4)}`;
-      submitBtn.disabled = false;
-    });
-
-    function toRadians(deg) {
-      return deg * Math.PI / 180;
-    }
-
-    function getDistance(lat1, lng1, lat2, lng2) {
-      const R = 6371;
-      const dLat = toRadians(lat2 - lat1);
-      const dLng = toRadians(lng2 - lng1);
-      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-                Math.sin(dLng / 2) * Math.sin(dLng / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    function updateLeaderboard(name, score) {
-      const list = document.getElementById('scoreList');
-      const li = document.createElement('li');
-      li.textContent = `${name} – ${score.toFixed(1)} km`;
-      list.appendChild(li);
-    }
-
-    submitBtn.addEventListener('click', () => {
-      const name = document.getElementById('playerName').value.trim();
-      if (!name || !guessLocation) return;
-
-      const dist = getDistance(
-        guessLocation.lat, guessLocation.lng,
-        realLocation.lat, realLocation.lng
-      );
-
-      document.getElementById('result').innerHTML =
-        `<p>You were <strong>${dist.toFixed(2)} km</strong> away!</p>`;
-
-      // Show real location
-      L.marker(realLocation, {
-        icon: L.icon({
-          iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/RedDot.svg/120px-RedDot.svg.png',
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        })
-      }).addTo(markerLayer);
-
-      updateLeaderboard(name, dist);
-
-      submitBtn.disabled = true;
-      map.off('click');
-      document.getElementById('guess-info').textContent = 'Game over! Refresh to play again.';
-    });
-  </script>
-</body>
-</html>
