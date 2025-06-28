@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GoogleWhere - Guess the Location</title>
+  <title>GoogleWhere - Random Location Guess</title>
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
   <style>
     body {
@@ -14,7 +14,6 @@
       height: 100vh;
       background: #f0f0f0;
     }
-
     header {
       position: fixed;
       top: 0;
@@ -27,7 +26,6 @@
       font-size: 1.5rem;
       z-index: 10;
     }
-
     #leaderboard {
       width: 250px;
       background: white;
@@ -36,12 +34,10 @@
       border-right: 1px solid #ddd;
       margin-top: 72px;
     }
-
     #leaderboard h3 {
       margin-top: 0;
       text-align: center;
     }
-
     #main {
       flex: 1;
       display: flex;
@@ -51,7 +47,6 @@
       margin-top: 72px;
       overflow-y: auto;
     }
-
     #play-area {
       display: flex;
       width: 100%;
@@ -59,30 +54,20 @@
       gap: 1rem;
       flex-grow: 1;
     }
-
     #photo-container {
       flex: 1;
       min-width: 300px;
       max-width: 500px;
     }
-
-    #photo {
-      width: 100%;
-      height: auto;
-      border-radius: 8px;
-    }
-
     #map {
       flex: 2;
       min-height: 500px;
       border-radius: 8px;
     }
-
     #guess-info, #result {
       margin-top: 1rem;
       font-size: 1rem;
     }
-
     button, input[type="text"] {
       margin-top: 1rem;
       padding: 0.5rem;
@@ -90,11 +75,9 @@
       border-radius: 4px;
       border: 1px solid #ccc;
     }
-
     ul#scoreList {
       padding-left: 1rem;
     }
-
     @media (max-width: 900px) {
       #play-area {
         flex-direction: column;
@@ -103,7 +86,7 @@
   </style>
 </head>
 <body>
-  <header>GoogleWhere - Guess the Location</header>
+  <header>GoogleWhere - Guess the Random Populated Place</header>
 
   <div id="leaderboard">
     <h3>Leaderboard</h3>
@@ -112,14 +95,9 @@
 
   <div id="main">
     <input type="text" id="playerName" placeholder="Enter your name" />
-
     <div id="play-area">
-      <div id="photo-container">
-        <img id="photo" src="" alt="Guess the location" />
-      </div>
       <div id="map"></div>
     </div>
-
     <div id="guess-info">Click on the map to make your guess.</div>
     <button id="submit-btn" disabled>Submit Guess</button>
     <button id="next-btn" style="display:none;">Next Round</button>
@@ -128,51 +106,19 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const locations = [
-      {
-        name: "Eiffel Tower",
-        lat: 48.8584,
-        lng: 2.2945,
-        image: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Eiffel_Tower_from_the_trocadero%2C_Paris_5_March_2013.jpg"
-      },
-      {
-        name: "Statue of Liberty",
-        lat: 40.6892,
-        lng: -74.0445,
-        image: "https://upload.wikimedia.org/wikipedia/commons/a/a1/Statue_of_Liberty_7.jpg"
-      },
-      {
-        name: "Great Wall of China",
-        lat: 40.4319,
-        lng: 116.5704,
-        image: "https://upload.wikimedia.org/wikipedia/commons/1/10/201905_Great_Wall_China_Badaling_section_panorama.jpg"
-      },
-      {
-        name: "Sydney Opera House",
-        lat: -33.8568,
-        lng: 151.2153,
-        image: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Sydney_Opera_House_Sails.jpg"
-      },
-      {
-        name: "Christ the Redeemer",
-        lat: -22.9519,
-        lng: -43.2105,
-        image: "https://upload.wikimedia.org/wikipedia/commons/8/88/Christ_the_Redeemer_-_Cristo_Redentor.jpg"
-      }
-    ];
-
-    let currentIndex = -1;
     let selected = null;
     let guessLocation = null;
     let map = null;
     let markerLayer = null;
     let submitBtn, nextBtn;
 
-    function pickRandomLocation() {
-      currentIndex = Math.floor(Math.random() * locations.length);
-      selected = locations[currentIndex];
-      document.getElementById('photo').src = selected.image;
-      document.getElementById('photo').alt = "Guess the location: " + selected.name;
+    function getRandomLatLng() {
+      let lat, lng;
+      do {
+        lat = (Math.random() * 140) - 70; // Avoid poles
+        lng = (Math.random() * 360) - 180;
+      } while (lat < -60 || lat > 70); // Avoid ice caps
+      return { lat, lng };
     }
 
     function toRadians(deg) {
@@ -191,21 +137,31 @@
     }
 
     function updateLeaderboard(name, score) {
+      let scores = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+      scores.push({ name, score });
+      scores.sort((a, b) => a.score - b.score);
+      localStorage.setItem('leaderboard', JSON.stringify(scores));
+      renderLeaderboard(scores);
+    }
+
+    function renderLeaderboard(scores) {
       const list = document.getElementById('scoreList');
-      const li = document.createElement('li');
-      li.textContent = `${name} – ${score.toFixed(1)} km`;
-      list.appendChild(li);
+      list.innerHTML = '';
+      scores.slice(0, 10).forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `${entry.name} – ${entry.score.toFixed(1)} km`;
+        list.appendChild(li);
+      });
     }
 
     function startGame() {
-      pickRandomLocation();
+      selected = getRandomLatLng();
       guessLocation = null;
       document.getElementById('result').innerHTML = '';
       document.getElementById('guess-info').textContent = 'Click on the map to make your guess.';
       submitBtn.disabled = true;
       nextBtn.style.display = 'none';
 
-      if (markerLayer) markerLayer.clearLayers();
       if (!map) {
         map = L.map('map').setView([20, 0], 2);
         markerLayer = L.layerGroup().addTo(map);
@@ -215,12 +171,9 @@
         }).addTo(map);
       } else {
         map.setView([20, 0], 2);
-        map.eachLayer(layer => {
-          if (layer instanceof L.Marker) map.removeLayer(layer);
-        });
         markerLayer.clearLayers();
-        map.on('click', handleMapClick);
       }
+      map.on('click', handleMapClick);
     }
 
     function handleMapClick(e) {
@@ -240,21 +193,16 @@
     window.onload = () => {
       submitBtn = document.getElementById('submit-btn');
       nextBtn = document.getElementById('next-btn');
+      const scores = JSON.parse(localStorage.getItem('leaderboard') || '[]');
+      renderLeaderboard(scores);
       startGame();
-      map.on('click', handleMapClick);
 
       submitBtn.addEventListener('click', () => {
         const name = document.getElementById('playerName').value.trim();
         if (!name || !guessLocation) return;
-
-        const dist = getDistance(
-          guessLocation.lat, guessLocation.lng,
-          selected.lat, selected.lng
-        );
-
+        const dist = getDistance(guessLocation.lat, guessLocation.lng, selected.lat, selected.lng);
         document.getElementById('result').innerHTML =
           `<p>You were <strong>${dist.toFixed(2)} km</strong> away!</p>`;
-
         L.marker([selected.lat, selected.lng], {
           icon: L.icon({
             iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/RedDot.svg/120px-RedDot.svg.png',
@@ -262,7 +210,6 @@
             iconAnchor: [12, 12],
           })
         }).addTo(markerLayer);
-
         updateLeaderboard(name, dist);
         submitBtn.disabled = true;
         map.off('click');
