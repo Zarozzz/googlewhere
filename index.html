@@ -61,12 +61,36 @@
     box-shadow: 0 0 5px rgba(0,0,0,0.2);
   }
   #leaderboard {
-    background: #f7f7f7;
+    background: #ffffff; /* bright white */
     border-radius: 8px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     padding: 1rem;
     width: 280px;
     overflow-y: auto;
+    color: #222; /* dark text */
+  }
+  #leaderboard h3 {
+    margin-top: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #004a99;
+    text-align: center;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  }
+  #leaderboard-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+  #leaderboard-list li {
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.3s ease;
+    cursor: default;
+  }
+  #leaderboard-list li:hover {
+    background-color: #d0e7ff;
+    color: #003366;
+    font-weight: bold;
   }
   #guess-info {
     text-align: center;
@@ -100,7 +124,7 @@
   <header>GoogleWhere - Guess the Populated City (Satellite View + Leaderboard)</header>
   <div id="result"></div>
   <div id="controls">
-    <input type="text" id="playerName" placeholder="Enter your player name" />
+    <input type="text" id="playerName" placeholder="Your name" />
     <button id="submit-btn" disabled>Submit</button>
     <button id="next-btn" style="display:none;">Next</button>
   </div>
@@ -111,7 +135,7 @@
     </div>
     <div id="leaderboard">
       <h3>Leaderboard</h3>
-      <ul id="leaderboard-list" style="list-style:none; padding-left:0;"></ul>
+      <ul id="leaderboard-list"></ul>
     </div>
   </div>
   <div id="guess-info">Tap the map to guess the location!</div>
@@ -155,7 +179,11 @@
       list.innerHTML = "";
       leaderboard.slice(0, 10).forEach(({name, dist}, idx) => {
         const li = document.createElement("li");
-        li.textContent = `${idx + 1}. ${name} - ${dist.toFixed(1)} km`;
+        let badge = "";
+        if (idx === 0) badge = " 🏆";
+        else if (idx === 1) badge = " 🥈";
+        else if (idx === 2) badge = " 🥉";
+        li.textContent = `${idx + 1}. ${name} - ${dist.toFixed(1)} km${badge}`;
         list.appendChild(li);
       });
     }
