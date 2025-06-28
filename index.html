@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GoogleWhere - Random Location Guess</title>
+  <title>GoogleWhere - Guess the Random Location</title>
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet" />
   <style>
     body {
@@ -58,15 +57,25 @@
       flex: 1;
       min-width: 300px;
       max-width: 500px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      height: 500px;
+    }
+    #photo-map {
+      height: 100%;
+      width: 100%;
     }
     #map {
       flex: 2;
       min-height: 500px;
       border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
     }
     #guess-info, #result {
       margin-top: 1rem;
       font-size: 1rem;
+      max-width: 1400px;
     }
     button, input[type="text"] {
       margin-top: 1rem;
@@ -82,6 +91,10 @@
       #play-area {
         flex-direction: column;
       }
+      #photo-container, #map {
+        height: 300px;
+        max-width: 100%;
+      }
     }
   </style>
 </head>
@@ -96,6 +109,9 @@
   <div id="main">
     <input type="text" id="playerName" placeholder="Enter your name" />
     <div id="play-area">
+      <div id="photo-container">
+        <div id="photo-map"></div>
+      </div>
       <div id="map"></div>
     </div>
     <div id="guess-info">Click on the map to make your guess.</div>
@@ -109,15 +125,17 @@
     let selected = null;
     let guessLocation = null;
     let map = null;
+    let photoMap = null;
     let markerLayer = null;
+    let photoMarker = null;
     let submitBtn, nextBtn;
 
     function getRandomLatLng() {
       let lat, lng;
       do {
-        lat = (Math.random() * 140) - 70; // Avoid poles
+        lat = (Math.random() * 140) - 70; // Between -70 and +70 to avoid poles
         lng = (Math.random() * 360) - 180;
-      } while (lat < -60 || lat > 70); // Avoid ice caps
+      } while (lat < -60 || lat > 70); // Avoid ice caps and poles
       return { lat, lng };
     }
 
@@ -162,17 +180,16 @@
       submitBtn.disabled = true;
       nextBtn.style.display = 'none';
 
-      if (!map) {
-        map = L.map('map').setView([20, 0], 2);
-        markerLayer = L.layerGroup().addTo(map);
-        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-          attribution: 'Tiles © Esri',
-          maxZoom: 18
-        }).addTo(map);
-      } else {
-        map.setView([20, 0], 2);
-        markerLayer.clearLayers();
+      // Set photoMap to selected location zoom 15 (close up)
+      photoMap.setView([selected.lat, selected.lng], 15);
+      if (photoMarker) {
+        photoMap.removeLayer(photoMarker);
       }
+      photoMarker = L.marker([selected.lat, selected.lng]).addTo(photoMap);
+
+      // Reset guess map
+      map.setView([20, 0], 2);
+      markerLayer.clearLayers();
       map.on('click', handleMapClick);
     }
 
@@ -195,6 +212,22 @@
       nextBtn = document.getElementById('next-btn');
       const scores = JSON.parse(localStorage.getItem('leaderboard') || '[]');
       renderLeaderboard(scores);
+
+      // Initialize photo map (small close-up)
+      photoMap = L.map('photo-map', { zoomControl: false, dragging: false, scrollWheelZoom: false, doubleClickZoom: false });
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri',
+        maxZoom: 18
+      }).addTo(photoMap);
+
+      // Initialize guess map (big, interactive)
+      map = L.map('map');
+      markerLayer = L.layerGroup().addTo(map);
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri',
+        maxZoom: 18
+      }).addTo(map);
+
       startGame();
 
       submitBtn.addEventListener('click', () => {
