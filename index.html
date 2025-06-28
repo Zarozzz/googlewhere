@@ -302,7 +302,13 @@
   }
 
   window.onload = () => {
-    photoMap = L.map("photo-map", { zoomControl: false, dragging: false, scrollWheelZoom: false });
+    photoMap = L.map("photo-map", {
+  zoomControl: false,
+  dragging: false,
+  scrollWheelZoom: false,
+  minZoom: 14,
+  maxZoom: 18
+});
     mainMap = L.map("map");
     markerLayer = L.layerGroup().addTo(mainMap);
 
