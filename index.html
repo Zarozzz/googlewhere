@@ -9,10 +9,9 @@
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      background: #f0f0f0;
       display: flex;
-      flex-direction: row;
       height: 100vh;
+      background: #f0f0f0;
     }
 
     header {
@@ -49,23 +48,38 @@
       align-items: center;
       padding: 1rem;
       margin-top: 72px;
+      overflow-y: auto;
+    }
+
+    #play-area {
+      display: flex;
+      width: 100%;
+      max-width: 1400px;
+      gap: 1rem;
+      flex-grow: 1;
+    }
+
+    #photo-container {
+      flex: 1;
+      min-width: 300px;
+      max-width: 500px;
     }
 
     #photo {
-      max-width: 100%;
+      width: 100%;
+      height: auto;
       border-radius: 8px;
     }
 
     #map {
-      width: 90%;
-      height: 400px;
-      margin-top: 1rem;
+      flex: 2;
+      min-height: 500px;
       border-radius: 8px;
     }
 
-    #guess-info {
+    #guess-info, #result {
       margin-top: 1rem;
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
 
     button, input[type="text"] {
@@ -76,8 +90,14 @@
       border: 1px solid #ccc;
     }
 
-    #result {
-      margin-top: 1rem;
+    ul#scoreList {
+      padding-left: 1rem;
+    }
+
+    @media (max-width: 900px) {
+      #play-area {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -91,8 +111,14 @@
 
   <div id="main">
     <input type="text" id="playerName" placeholder="Enter your name" />
-    <img id="photo" src="https://upload.wikimedia.org/wikipedia/commons/e/e6/Eiffel_Tower_from_the_trocadero%2C_Paris_5_March_2013.jpg" alt="Guess the location" />
-    <div id="map"></div>
+
+    <div id="play-area">
+      <div id="photo-container">
+        <img id="photo" src="" alt="Guess the location" />
+      </div>
+      <div id="map"></div>
+    </div>
+
     <div id="guess-info">Click on the map to make your guess.</div>
     <button id="submit-btn" disabled>Submit Guess</button>
     <div id="result"></div>
@@ -100,18 +126,62 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    const realLocation = { lat: 48.8584, lng: 2.2945 }; // Eiffel Tower
+    const locations = [
+      {
+        name: "Eiffel Tower",
+        lat: 48.8584,
+        lng: 2.2945,
+        image: "https://upload.wikimedia.org/wikipedia/commons/e/e6/Eiffel_Tower_from_the_trocadero%2C_Paris_5_March_2013.jpg"
+      },
+      {
+        name: "Statue of Liberty",
+        lat: 40.6892,
+        lng: -74.0445,
+        image: "https://upload.wikimedia.org/wikipedia/commons/a/a1/Statue_of_Liberty_7.jpg"
+      },
+      {
+        name: "Great Wall of China",
+        lat: 40.4319,
+        lng: 116.5704,
+        image: "https://upload.wikimedia.org/wikipedia/commons/1/10/201905_Great_Wall_China_Badaling_section_panorama.jpg"
+      },
+      {
+        name: "Sydney Opera House",
+        lat: -33.8568,
+        lng: 151.2153,
+        image: "https://upload.wikimedia.org/wikipedia/commons/3/3e/Sydney_Opera_House_Sails.jpg"
+      },
+      {
+        name: "Christ the Redeemer",
+        lat: -22.9519,
+        lng: -43.2105,
+        image: "https://upload.wikimedia.org/wikipedia/commons/8/88/Christ_the_Redeemer_-_Cristo_Redentor.jpg"
+      }
+    ];
+
+    // Pick a random one
+    const selected = locations[Math.floor(Math.random() * locations.length)];
     let guessLocation = null;
+
+    // Load image
+    document.getElementById('photo').src = selected.image;
+
+    // Initialize map
     const map = L.map('map').setView([20, 0], 2);
     const markerLayer = L.layerGroup().addTo(map);
     const submitBtn = document.getElementById('submit-btn');
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Satellite tiles
+    L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHR4cG1mY2gifQ._zY4bDZoYlM5Hb3AB3CCwQ', {
       maxZoom: 18,
+      tileSize: 512,
+      zoomOffset: -1,
+      attribution: '© Mapbox © OpenStreetMap',
     }).addTo(map);
 
-    map.on('click', function(e) {
-      if (!document.getElementById('playerName').value) {
+    map.on('click', function (e) {
+      const name = document.getElementById('playerName').value.trim();
+      if (!name) {
         alert("Please enter your name before guessing.");
         return;
       }
@@ -152,14 +222,13 @@
 
       const dist = getDistance(
         guessLocation.lat, guessLocation.lng,
-        realLocation.lat, realLocation.lng
+        selected.lat, selected.lng
       );
 
       document.getElementById('result').innerHTML =
         `<p>You were <strong>${dist.toFixed(2)} km</strong> away!</p>`;
 
-      // Show real location
-      L.marker(realLocation, {
+      L.marker([selected.lat, selected.lng], {
         icon: L.icon({
           iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/RedDot.svg/120px-RedDot.svg.png',
           iconSize: [24, 24],
