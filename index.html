@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GoogleWhere - Guess the City</title>
+  <title>GoogleWhere - Guess the Populated City</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://cdn.ably.io/lib/ably.min-1.js"></script>
   <style>
@@ -72,7 +72,7 @@
   </style>
 </head>
 <body>
-<header>GoogleWhere - Guess the City</header>
+<header>GoogleWhere - Guess the Populated City</header>
 <div id="result"></div>
 <div id="controls">
   <input type="text" id="playerName" placeholder="Your name" />
@@ -98,7 +98,6 @@
     {"lat":35.6,"lng":139.7},{"lat":51.5,"lng":-0.1},{"lat":19.4,"lng":-99.1},
     {"lat":55.8,"lng":37.6},{"lat":-33.9,"lng":151.2},{"lat":1.3,"lng":103.8},
     {"lat":52.5,"lng":13.4}
-    // Add more locations here
   ];
 
   let locationQueue = [];
@@ -107,7 +106,7 @@
   let photoMap, mainMap, photoMarker, markerLayer;
   let leaderboard = [];
 
-  const ably = new Ably.Realtime('0nCEnA.7-aC8g:zCvcQ-hz9TjxNNVCQBM_52vEDQQrC9DbKVNmwwDhjj4'); // ← Replace this
+  const ably = new Ably.Realtime('0nCEnA.7-aC8g:zCvcQ-hz9TjxNNVCQBM_52vEDQQrC9DbKVNmwwDhjj4');
   const channel = ably.channels.get('googlewhere-leaderboard');
 
   channel.subscribe('update', (message) => {
@@ -183,13 +182,11 @@
     document.getElementById("result").innerHTML = `You were ${dist.toFixed(1)} km from the hidden location`;
     L.marker([selected.lat, selected.lng]).addTo(markerLayer);
 
-    // Scoring
     let points = 0;
     if (dist <= 50) points = 50;
     else if (dist <= 500) points = 20;
     else if (dist <= 1000) points = 10;
 
-    // Update or add player score
     let player = leaderboard.find(p => p.name === name);
     if (player) {
       player.score += points;
@@ -221,6 +218,20 @@
     const tiles = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
     L.tileLayer(tiles, { maxZoom: 18 }).addTo(photoMap);
     L.tileLayer(tiles, { maxZoom: 18 }).addTo(mainMap);
+
+    fetch('https://rest.ably.io/channels/googlewhere-leaderboard/messages?limit=1&direction=backwards', {
+      headers: {
+        'Authorization': 'Basic ' + btoa('YOUR-ABLY-REST-KEY')
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.length > 0 && data[0].data) {
+        leaderboard = data[0].data;
+        updateLeaderboard();
+      }
+    })
+    .catch(console.error);
 
     document.getElementById("submit-btn").onclick = submitGuess;
     document.getElementById("next-btn").onclick = startGame;
