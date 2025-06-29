@@ -72,7 +72,7 @@
   </style>
 </head>
 <body>
-<header>GoogleWhere - Guess the Populated City</header>
+<header>GoogleWhere - Guess the City</header>
 <div id="result"></div>
 <div id="controls">
   <input type="text" id="playerName" placeholder="Your name" />
@@ -107,11 +107,9 @@
   let photoMap, mainMap, photoMarker, markerLayer;
   let leaderboard = [];
 
-  // Initialize Ably
-  const ably = new Ably.Realtime('0nCEnA.7-aC8g:zCvcQ-hz9TjxNNVCQBM_52vEDQQrC9DbKVNmwwDhjj4'); // ← REPLACE THIS!
+  const ably = new Ably.Realtime('0nCEnA.7-aC8g:zCvcQ-hz9TjxNNVCQBM_52vEDQQrC9DbKVNmwwDhjj4'); // ← Replace this
   const channel = ably.channels.get('googlewhere-leaderboard');
 
-  // Receive leaderboard updates
   channel.subscribe('update', (message) => {
     leaderboard = message.data;
     updateLeaderboard();
@@ -145,10 +143,10 @@
   function updateLeaderboard() {
     const list = document.getElementById("leaderboard-list");
     list.innerHTML = "";
-    leaderboard.slice(0, 10).forEach(({name, dist}, idx) => {
+    leaderboard.slice(0, 10).forEach(({name, score}, idx) => {
       const li = document.createElement("li");
       let badge = idx === 0 ? " 🏆" : idx === 1 ? " 🥈" : idx === 2 ? " 🥉" : "";
-      li.textContent = `${idx + 1}. ${name} - ${dist.toFixed(1)} km${badge}`;
+      li.textContent = `${idx + 1}. ${name} - ${score} pts${badge}`;
       list.appendChild(li);
     });
   }
@@ -185,13 +183,24 @@
     document.getElementById("result").innerHTML = `You were ${dist.toFixed(1)} km from the hidden location`;
     L.marker([selected.lat, selected.lng]).addTo(markerLayer);
 
-    leaderboard.push({ name, dist });
-    leaderboard.sort((a,b) => a.dist - b.dist);
+    // Scoring
+    let points = 0;
+    if (dist <= 50) points = 50;
+    else if (dist <= 500) points = 20;
+    else if (dist <= 1000) points = 10;
 
-    // Broadcast updated leaderboard
+    // Update or add player score
+    let player = leaderboard.find(p => p.name === name);
+    if (player) {
+      player.score += points;
+    } else {
+      leaderboard.push({ name, score: points });
+    }
+
+    leaderboard.sort((a, b) => b.score - a.score);
     channel.publish('update', leaderboard);
-
     updateLeaderboard();
+
     document.getElementById("submit-btn").disabled = true;
     document.getElementById("next-btn").style.display = "inline-block";
     mainMap.off("click");
@@ -213,7 +222,6 @@
     L.tileLayer(tiles, { maxZoom: 18 }).addTo(photoMap);
     L.tileLayer(tiles, { maxZoom: 18 }).addTo(mainMap);
 
-    updateLeaderboard();
     document.getElementById("submit-btn").onclick = submitGuess;
     document.getElementById("next-btn").onclick = startGame;
 
